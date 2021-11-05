@@ -15,8 +15,11 @@ fn main() -> std::io::Result<()> {
     thread::spawn(move || {
         server::run(send_to_main, read_from_main);
     });
+
+    // MAIN GAME LOOP
     loop {
-        let incoming = match read_from_server.recv() {
+        // HANDLE SERVER I/O
+        match read_from_server.recv() {
             Ok(packet_data) => { 
                 println!("[Main] Receieved: {}", packet_data);
                 if *packet_data.data.get(0).unwrap() == b'\xFF' {
@@ -24,14 +27,12 @@ fn main() -> std::io::Result<()> {
                         token: packet_data.token,
                         data: vec![0xFF, 1, 3, 3, 7]
                     }).unwrap();
-                }
-                packet_data
+                };
             }
-            Err(err) => { 
-//                println!("[Main] Error receiving from thread: {}", err);
-                continue;
-            }
+            Err(err) => { }
         };
+
+        // DO GAME STUFF
     }
 
     Ok(())

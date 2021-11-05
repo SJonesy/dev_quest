@@ -30,7 +30,7 @@ pub fn run(
 
     // SERVER I/O LOOP
     loop {
-        // READ DATA FROM MAIN
+        // READ DATA FROM MAIN THREAD
         match in_channel.try_recv() {
             Ok(packet_data) => {
                 let token = packet_data.token;
@@ -55,11 +55,12 @@ pub fn run(
                 }
             }
         }
+
         // READ/WRITE FROM/TO SOCKETS
         poll.poll(&mut events, Some(Duration::from_millis(1)))
             .expect("Polling error");
         for event in &events {
-            println!("Event: {:?}", event);
+            //println!("Event: {:?}", event);
             match event.token() {
                 LISTEN_SOCKET => {
                     // Accept new connections
@@ -115,10 +116,11 @@ pub fn run(
                 _ => unreachable!(),
             }
         }
-        // WRITE DATA TO MAIN
+
+        // WRITE DATA TO MAIN THREAD
         for packet_data in incoming_packets.drain(..) {
             out_channel.send(packet_data)
                 .expect("Error sending data to main");
         }
-    }
+    }// SERVER I/O LOOP END
 }
