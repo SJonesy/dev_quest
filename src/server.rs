@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::sync::mpsc::{self, TryRecvError};
 use std::time::Duration;
 
-use dev_quest::PacketData;
+use dev_quest::{PacketData, INTERNAL_OPCODE, InternalOpcodeInstruction, PlayerState};
 
 
 pub fn run(
@@ -14,7 +14,7 @@ pub fn run(
 ) -> std::io::Result<()> {
     const LISTEN_SOCKET: Token = Token(0);
 
-    let address = "0.0.0.0:1337".parse().unwrap();
+    let address = "0.0.0.0:4242".parse().unwrap(); // TODO: get this from some config
     let mut listener = TcpListener::bind(address).expect("Failed to bind");
 
     let mut poll = Poll::new().unwrap();
@@ -73,6 +73,11 @@ pub fn run(
                                 .expect("Register failed.");
                             connections.insert(token, stream);
                             println!("Accepted connection from: {}", addr);
+                            // Inform MAIN that we have a player logging in
+                            incoming_packets.push(PacketData {
+                                token,
+                                data: vec![INTERNAL_OPCODE, InternalOpcodeInstruction::SetPlayerState as u8, PlayerState::LoggingIn as u8],
+                            });
                         }
                         Err(e) => {
                             println!("Accept error from: {:?}", e);
