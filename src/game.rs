@@ -1,69 +1,51 @@
 #![allow(dead_code, non_snake_case)]
 
-use specs::prelude::*;
+use bevy_ecs::prelude::*;
 
-// COMPONENT DECLARATIONS
-#[derive(Debug)]
-struct X(i32);
-#[derive(Debug)]
-struct Y(i32);
-#[derive(Debug)]
+// COMPONENTS
+#[derive(Debug, Component)]
+struct Position {
+    x: u32,
+    y: u32,
+}
+
+#[derive(Debug, Component)]
 struct Name(String);
 
-// COMPONENT IMPLEMENTATIONS
-impl Component for X {
-    type Storage = VecStorage<Self>;
-}
-impl Component for Y {
-    type Storage = VecStorage<Self>;
-}
-impl Component for Name {
-    type Storage = VecStorage<Self>;
-}
-
-// SYSTEM DECLARATIONS
-struct OutputObjects;
-
-// SYSTEM IMPLEMENTATIONS
-impl<'a> System<'a> for OutputObjects {
-    type SystemData = (
-        ReadStorage<'a, X>,
-        ReadStorage<'a, Y>,
-        ReadStorage<'a, Name>,
-    );
-
-    fn run(&mut self, (x, y, name): Self::SystemData) {
-        for (x, y, name) in (&x, &y, &name).join() {
-            println!("{:?} is at {:?}, {:?}", name, x, y);
-        }
+// SYSTEMS
+fn print_positions(query: Query<(Entity, &Position, &Name)>) {
+    for (entity, position, name) in &query {
+        println!(
+            "Entity \"{:?}\" is at position: x {}, y {}",
+            name, position.x, position.y
+        );
     }
 }
 
-pub fn init(world: &mut specs::World) -> std::io::Result<()> {
-    world.register::<X>();
-    world.register::<Y>();
-    world.register::<Name>();
+pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
+    world.spawn((
+        Position { x: 1, y: 1 },
+        Name(String::from("Star Destroyer 1")),
+    ));
 
-    world
-        .create_entity()
-        .with(X(1))
-        .with(Y(1))
-        .with(Name(String::from("Star Destroyer")))
-        .build();
+    world.spawn((
+        Position { x: 2, y: 2 },
+        Name(String::from("Star Destroyer 2")),
+    ));
 
-    world
-        .create_entity()
-        .with(X(2))
-        .with(Y(2))
-        .with(Name(String::from("Star Destroyer 2")))
-        .build();
+    #[derive(StageLabel)]
+    pub struct UpdateLabel;
+
+    schedule.add_stage(
+        UpdateLabel,
+        SystemStage::parallel().with_system(print_positions),
+    );
 
     Ok(())
 }
 
-pub fn tick(world: &mut World) -> std::io::Result<()> {
-    OutputObjects.run_now(&world);
-    world.maintain();
+pub fn tick(mut world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
+    //schedule.run(&mut world);
 
     Ok(())
 }

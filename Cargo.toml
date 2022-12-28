@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 mio = { version = "0.7", features = ["os-poll", "net"] }
-specs = "0.18.0"
+bevy_ecs = "0.9.1"

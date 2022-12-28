@@ -5,11 +5,10 @@ mod server;
 
 use crate::game::init;
 use crate::server::run;
+use bevy_ecs::prelude::*;
 use dev_quest::{
     InternalOpcodeInstruction, PacketData, PlayerState, Players, ANSI, INTERNAL_OPCODE, TELNET,
 };
-use specs::prelude::*;
-use specs::{DispatcherBuilder, World};
 use std::sync::mpsc;
 use std::thread;
 
@@ -25,7 +24,8 @@ fn main() -> std::io::Result<()> {
     };
 
     let mut world = World::new();
-    game::init(&mut world);
+    let mut schedule = Schedule::default();
+    game::init(&mut world, &mut schedule);
 
     // MAIN GAME LOOP
     loop {
@@ -72,7 +72,7 @@ fn main() -> std::io::Result<()> {
         };
 
         // DO GAME STUFF
-        game::tick(&mut world);
+        game::tick(&mut world, &mut schedule);
     }
 
     Ok(())
