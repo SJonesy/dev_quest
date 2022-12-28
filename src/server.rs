@@ -5,8 +5,7 @@ use std::io::{Read, Write};
 use std::sync::mpsc::{self, TryRecvError};
 use std::time::Duration;
 
-use dev_quest::{PacketData, INTERNAL_OPCODE, InternalOpcodeInstruction, PlayerState};
-
+use dev_quest::{InternalOpcodeInstruction, PacketData, PlayerState, INTERNAL_OPCODE};
 
 pub fn run(
     out_channel: mpsc::Sender<PacketData>,
@@ -42,11 +41,13 @@ pub fn run(
                         e.get_mut().push(packet_data);
                     }
                 };
-                poll.registry().reregister(
-                    connections.get_mut(&token).unwrap(),
-                    token,
-                    Interest::WRITABLE
-                ).expect("Reregister failed.");
+                poll.registry()
+                    .reregister(
+                        connections.get_mut(&token).unwrap(),
+                        token,
+                        Interest::WRITABLE,
+                    )
+                    .expect("Reregister failed.");
             }
             Err(err) => {
                 if err == TryRecvError::Disconnected {
@@ -76,7 +77,11 @@ pub fn run(
                             // Inform MAIN that we have a player logging in
                             incoming_packets.push(PacketData {
                                 token,
-                                data: vec![INTERNAL_OPCODE, InternalOpcodeInstruction::SetPlayerState as u8, PlayerState::LoggingIn as u8],
+                                data: vec![
+                                    INTERNAL_OPCODE,
+                                    InternalOpcodeInstruction::SetPlayerState as u8,
+                                    PlayerState::LoggingIn as u8,
+                                ],
                             });
                         }
                         Err(e) => {
@@ -93,7 +98,11 @@ pub fn run(
                             connections.remove(&token);
                         }
                         Ok(num_bytes) => {
-                            println!("Receieved {} bytes from {:?}", num_bytes, connection.peer_addr());
+                            println!(
+                                "Receieved {} bytes from {:?}",
+                                num_bytes,
+                                connection.peer_addr()
+                            );
                             incoming_packets.push(PacketData {
                                 token,
                                 data: buffer[..num_bytes].to_vec(),
@@ -112,11 +121,13 @@ pub fn run(
                             .write(packet_data.data.as_slice())
                             .expect("Write failed.");
                     }
-                    poll.registry().reregister(
-                        connections.get_mut(&token).unwrap(),
-                        token,
-                        Interest::READABLE,
-                    ).expect("Reregister failed.");
+                    poll.registry()
+                        .reregister(
+                            connections.get_mut(&token).unwrap(),
+                            token,
+                            Interest::READABLE,
+                        )
+                        .expect("Reregister failed.");
                 }
                 _ => unreachable!(),
             }
@@ -124,8 +135,9 @@ pub fn run(
 
         // WRITE DATA TO MAIN THREAD
         for packet_data in incoming_packets.drain(..) {
-            out_channel.send(packet_data)
+            out_channel
+                .send(packet_data)
                 .expect("Error sending data to main");
         }
-    }// SERVER I/O LOOP END
+    } // SERVER I/O LOOP END
 }
