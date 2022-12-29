@@ -11,6 +11,7 @@ use dev_quest::{
 };
 use std::sync::mpsc;
 use std::thread;
+use std::time::{Duration, SystemTime};
 
 fn main() -> std::io::Result<()> {
     let (send_to_main, read_from_server) = mpsc::channel();
@@ -26,6 +27,8 @@ fn main() -> std::io::Result<()> {
     let mut world = World::new();
     let mut schedule = Schedule::default();
     game::init(&mut world, &mut schedule);
+
+    let mut time = SystemTime::now();
 
     // MAIN GAME LOOP
     loop {
@@ -72,7 +75,18 @@ fn main() -> std::io::Result<()> {
         };
 
         // DO GAME STUFF
-        game::tick(&mut world, &mut schedule);
+        // doing 1 tick per second, I want to think about how this feels and what is optimal
+        match time.elapsed() {
+            Ok(elapsed) => {
+                if (elapsed.as_millis() >= 1000) {
+                    time = SystemTime::now();
+                    game::tick(&mut world, &mut schedule);
+                }
+            }
+            Err(e) => {
+                println!("Error: {e:?}");
+            }
+        }
     }
 
     Ok(())
