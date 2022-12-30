@@ -33,10 +33,10 @@ pub enum InternalOpcodeInstruction {
 impl From<u8> for InternalOpcodeInstruction {
     fn from(orig: u8) -> Self {
         match orig {
-            0x0 => return InternalOpcodeInstruction::None,
-            0x1 => return InternalOpcodeInstruction::SetPlayerState,
-            _ => return InternalOpcodeInstruction::None,
-        };
+            0x0 => InternalOpcodeInstruction::None,
+            0x1 => InternalOpcodeInstruction::SetPlayerState,
+            _ => InternalOpcodeInstruction::None,
+        }
     }
 }
 
@@ -57,10 +57,10 @@ pub enum PlayerState {
 impl From<u8> for PlayerState {
     fn from(orig: u8) -> Self {
         match orig {
-            0x0 => return PlayerState::None,
-            0x1 => return PlayerState::LoggingIn,
-            0x2 => return PlayerState::CharacterCreation,
-            _ => return PlayerState::None,
-        };
+            0x0 => PlayerState::None,
+            0x1 => PlayerState::LoggingIn,
+            0x2 => PlayerState::CharacterCreation,
+            _ => PlayerState::None,
+        }
     }
 }

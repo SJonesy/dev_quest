@@ -2,34 +2,46 @@
 
 use bevy_ecs::prelude::*;
 
+//------------------------------------------------------------------------------
 // COMPONENTS
+//------------------------------------------------------------------------------
 #[derive(Component)]
 struct Position {
-    x: u32,
-    y: u32,
+    // for now, i64 makes some of the math easier although the plan is for
+    // the bottom left corner of space to be 0,0 and the top right corner
+    // of space to be u32_max, u32_max.. maybe re-examine this later
+    x: i64,
+    y: i64,
 }
 
 #[derive(Component)]
-struct BaseShipStats {
-    id: u32,
-    max_shields: u32,
-    max_holds: u32,
-    max_hull: u32,
-    scanner_range: u32,
+struct Hull {
+    max: u32,
+    current: u32,
 }
 
 #[derive(Component)]
-struct ActiveShipData {
-    current_holds_empty: u32,
-    current_holds_fuel: f32,
-    current_hull: u32,
-    current_shields: u32,
+struct Shields {
+    max: u32,
+    current: u32,
 }
+
+#[derive(Component)]
+struct Holds {
+    max: u32,
+    empty: u32,
+    fuel: u32,
+}
+
+#[derive(Component)]
+struct ScannerRange(u32);
 
 #[derive(Debug, Component)]
 struct ShipName(String);
 
+//------------------------------------------------------------------------------
 // SYSTEMS
+//------------------------------------------------------------------------------
 fn print_positions(query: Query<(Entity, &Position)>) {
     for (entity, position) in &query {
         println!(
@@ -40,12 +52,15 @@ fn print_positions(query: Query<(Entity, &Position)>) {
 }
 
 fn do_ai_scans(
-    scanners: Query<(Entity, &Position, &BaseShipStats)>,
+    scanners: Query<(Entity, &Position, &ScannerRange)>,
     scannees: Query<(Entity, &Position)>,
 ) {
-    for (scanner_entity, scanner_position, base_ship_stats) in scanners.iter() {
+    // TODO stupidly slow prototype code, will have to figure out a smart way to do this at some point
+    for (scanner_entity, scanner_position, scanner_range) in scanners.iter() {
         for (scannee_entity, scannee_position) in scannees.iter() {
-            // TODO SCJ stupidly slow prototype code, will have to figure out a smart way to do this at some point
+            if (scanner_entity == scannee_entity) {
+                continue;
+            }
             let delta_x = ((scanner_position.x - scannee_position.x) as f64)
                 .abs()
                 .powf(2.0);
@@ -54,7 +69,7 @@ fn do_ai_scans(
                 .powf(2.0);
             let distance = f64::sqrt(delta_x + delta_y);
 
-            if (distance <= base_ship_stats.scanner_range as f64) {
+            if (distance <= scanner_range.0 as f64) {
                 // TODO store scanned info in faction data set
                 println!(
 		            "Entity {:?} at position: x {}, y {} can see entity {:?} at position: x {}, y {}",
@@ -65,39 +80,60 @@ fn do_ai_scans(
     }
 }
 
+//------------------------------------------------------------------------------
+// PUBLIC FUNCTIONS
+//---------------------------------------------------------------------------------
 pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
     // TODO attempt to load saved data and bang a new galaxy if there isn't any
-
-    let merchant_cruiser = BaseShipStats {
-        id: 0,
-        max_shields: 500,
-        max_holds: 1000,
-        max_hull: 100,
-        scanner_range: 25,
+    let merchant_cruiser_shields = Shields {
+        max: 500,
+        current: 500,
     };
 
-    let merchant_cruiser_starting = ActiveShipData {
-        current_holds_empty: merchant_cruiser.max_holds,
-        current_holds_fuel: 0.0 as f32,
-        current_hull: merchant_cruiser.max_hull,
-        current_shields: merchant_cruiser.max_shields,
+    let merchant_cruiser_hull = Hull {
+        max: 100,
+        current: 100,
     };
+
+    let merchant_cruiser_holds = Holds {
+        max: 1000,
+        empty: 1000,
+        fuel: 0,
+    };
+
+    let merchant_cruiser_scanner_range = ScannerRange(25);
 
     world.spawn((
         Position { x: 1, y: 1 },
-        ShipName(String::from("Pirate Merchant 1")),
-        BaseShipStats { ..merchant_cruiser },
-        ActiveShipData {
-            ..merchant_cruiser_starting
+        ShipName(String::from("Merchant Cruiser")),
+        Holds {
+            ..merchant_cruiser_holds
+        },
+        Shields {
+            ..merchant_cruiser_shields
+        },
+        Hull {
+            ..merchant_cruiser_hull
+        },
+        ScannerRange {
+            ..merchant_cruiser_scanner_range
         },
     ));
 
     world.spawn((
         Position { x: 2, y: 2 },
-        ShipName(String::from("Pirate Merchant 2")),
-        BaseShipStats { ..merchant_cruiser },
-        ActiveShipData {
-            ..merchant_cruiser_starting
+        ShipName(String::from("Merchant Cruiser")),
+        Holds {
+            ..merchant_cruiser_holds
+        },
+        Shields {
+            ..merchant_cruiser_shields
+        },
+        Hull {
+            ..merchant_cruiser_hull
+        },
+        ScannerRange {
+            ..merchant_cruiser_scanner_range
         },
     ));
 
@@ -113,7 +149,7 @@ pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
 }
 
 pub fn tick(mut world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
-    schedule.run(&mut world);
+    schedule.run(world);
 
     Ok(())
 }

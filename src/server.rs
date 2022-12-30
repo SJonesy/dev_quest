@@ -24,7 +24,7 @@ pub fn run(
     let mut connections: HashMap<Token, TcpStream> = HashMap::new();
     let mut incoming_packets: Vec<PacketData> = Vec::new();
     let mut outgoing_packets: HashMap<Token, Vec<PacketData>> = HashMap::new();
-    let mut buffer = [0 as u8; 65535];
+    let mut buffer = [0_u8; 65535];
     let mut events = Events::with_capacity(1024);
 
     // SERVER I/O LOOP
@@ -73,7 +73,7 @@ pub fn run(
                                 .register(&mut stream, token, Interest::READABLE)
                                 .expect("Register failed.");
                             connections.insert(token, stream);
-                            println!("Accepted connection from: {}", addr);
+                            println!("Accepted connection from: {addr}");
                             // Inform MAIN that we have a player logging in
                             incoming_packets.push(PacketData {
                                 token,
@@ -85,7 +85,7 @@ pub fn run(
                             });
                         }
                         Err(e) => {
-                            println!("Accept error from: {:?}", e);
+                            println!("Accept error from: {e:?}");
                         }
                     }
                 }
@@ -109,7 +109,7 @@ pub fn run(
                             });
                         }
                         Err(e) => {
-                            println!("Socket read error: {:?}", e);
+                            println!("Socket read error: {e:?}");
                         }
                     }
                 }

@@ -35,10 +35,10 @@ fn main() -> std::io::Result<()> {
         // HANDLE SERVER I/O
         match read_from_server.try_recv() {
             Ok(packet_data) => {
-                println!("[Main] Receieved: {}", packet_data);
+                println!("[Main] Receieved: {packet_data}");
                 let token_num: usize = usize::from(packet_data.token);
 
-                match *packet_data.data.get(0).unwrap() {
+                match *packet_data.data.first().unwrap() {
                     // TELNET CONTROL CODE
                     TELNET::IAC => {
                         // TODO: debug pong, remove eventually
