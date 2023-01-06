@@ -47,16 +47,16 @@ struct Hangar {
 }
 
 mod HULLSIZE {
-    // Millenium falcon is the same size as 3 x-wings per 
+    // Millenium falcon is the same size as 3 x-wings per
     // https://www.rebelscale.com/scale-lists/star-wars-size-analyses/official-star-wars-sizes/
     const PROBE: u32 = 1;
     const SATELLITE: u32 = 1;
     const FIGHTER: u32 = 2;
     const FRIGATE: u32 = 6;
-    const FREIGHTER: u32 = 24; 
+    const DESTROYER: u32 = 24;
     const CRUISER: u32 = 120;
     const CAPITAL: u32 = 720;
-    const STATION: u32 = 5040; 
+    const STATION: u32 = 5040;
 }
 
 #[derive(Debug, Component)]
