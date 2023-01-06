@@ -1,6 +1,7 @@
 #![allow(dead_code, non_snake_case)]
 
 use bevy_ecs::prelude::*;
+use rand::prelude::*;
 
 //------------------------------------------------------------------------------
 // COMPONENTS
@@ -38,6 +39,28 @@ struct ScannerRange(u32);
 
 #[derive(Debug, Component)]
 struct ShipName(String);
+
+#[derive(Debug, Component)]
+struct Hangar {
+    max: u32,
+    current: u32,
+}
+
+mod HULLSIZE {
+    // Millenium falcon is the same size as 3 x-wings per 
+    // https://www.rebelscale.com/scale-lists/star-wars-size-analyses/official-star-wars-sizes/
+    const PROBE: u32 = 1;
+    const SATELLITE: u32 = 1;
+    const FIGHTER: u32 = 2;
+    const FRIGATE: u32 = 6;
+    const FREIGHTER: u32 = 24; 
+    const CRUISER: u32 = 120;
+    const CAPITAL: u32 = 720;
+    const STATION: u32 = 5040; 
+}
+
+#[derive(Debug, Component)]
+struct Size(u32);
 
 //------------------------------------------------------------------------------
 // SYSTEMS
