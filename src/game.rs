@@ -46,21 +46,80 @@ struct Hangar {
     current: u32,
 }
 
-mod HULLSIZE {
-    // Millenium falcon is the same size as 3 x-wings per
-    // https://www.rebelscale.com/scale-lists/star-wars-size-analyses/official-star-wars-sizes/
-    const PROBE: u32 = 1;
-    const SATELLITE: u32 = 1;
-    const FIGHTER: u32 = 2;
-    const FRIGATE: u32 = 6;
-    const DESTROYER: u32 = 24;
-    const CRUISER: u32 = 120;
-    const CAPITAL: u32 = 720;
-    const STATION: u32 = 5040;
-}
+#[derive(Debug, Component)]
+struct DockingPorts(u32);
 
 #[derive(Debug, Component)]
-struct Size(u32);
+struct CanFitInHangar(bool);
+
+//------------------------------------------------------------------------------
+// SHIPS
+//------------------------------------------------------------------------------
+struct ShipStats {
+    hull: u32,
+    shields: u32,
+    holds: u32,
+    hangar_space: u32,
+    scanner_range: u32,
+    can_fit_in_hangar: bool,
+}
+trait ShipData {
+    fn get_ship_data(&self) -> ShipStats;
+}
+
+struct MerchantCruiser;
+impl ShipData for MerchantCruiser {
+    fn get_ship_data(&self) -> ShipStats {
+        ShipStats {
+            hull: 100,
+            shields: 500,
+            holds: 250,
+            hangar_space: 0,
+            scanner_range: 25,
+            can_fit_in_hangar: false,
+        }
+    }
+}
+
+fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<Position>) {
+    let ship_stats = ship_type.get_ship_data();
+
+    let shields = Shields {
+        max: ship_stats.shields,
+        current: ship_stats.shields,
+    };
+
+    let hull = Hull {
+        max: ship_stats.hull,
+        current: ship_stats.hull,
+    };
+
+    let holds = Holds {
+        max: ship_stats.hull,
+        empty: ship_stats.hull,
+        fuel: 0,
+    };
+
+    let scanner_range = ScannerRange(ship_stats.scanner_range);
+
+    let mut point = point;
+    if let None = point {
+        let mut rng = rand::thread_rng();
+        point = Some(Position {
+            x: rng.gen::<u32>() as i64,
+            y: rng.gen::<u32>() as i64,
+        });
+    }
+
+    world.spawn((
+        Position { ..point.unwrap() },
+        ShipName(String::from("Merchant Cruiser")),
+        Holds { ..holds },
+        Shields { ..shields },
+        Hull { ..hull },
+        ScannerRange { ..scanner_range },
+    ));
+}
 
 //------------------------------------------------------------------------------
 // SYSTEMS
@@ -84,15 +143,13 @@ fn do_ai_scans(
             if (scanner_entity == scannee_entity) {
                 continue;
             }
-            let delta_x = ((scanner_position.x - scannee_position.x) as f64)
-                .abs()
-                .powf(2.0);
-            let delta_y = ((scanner_position.y - scannee_position.y) as f64)
-                .abs()
-                .powf(2.0);
-            let distance = f64::sqrt(delta_x + delta_y);
 
-            if (distance <= scanner_range.0 as f64) {
+            // Manhattan distance formula
+            let delta_x = (scanner_position.x - scannee_position.x).abs();
+            let delta_y = (scanner_position.y - scannee_position.y).abs();
+            let distance = delta_x + delta_y;
+
+            if (distance <= scanner_range.0 as i64) {
                 // TODO store scanned info in faction data set
                 println!(
 		            "Entity {:?} at position: x {}, y {} can see entity {:?} at position: x {}, y {}",
@@ -108,66 +165,24 @@ fn do_ai_scans(
 //---------------------------------------------------------------------------------
 pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
     // TODO attempt to load saved data and bang a new galaxy if there isn't any
-    let merchant_cruiser_shields = Shields {
-        max: 500,
-        current: 500,
-    };
 
-    let merchant_cruiser_hull = Hull {
-        max: 100,
-        current: 100,
-    };
-
-    let merchant_cruiser_holds = Holds {
-        max: 1000,
-        empty: 1000,
-        fuel: 0,
-    };
-
-    let merchant_cruiser_scanner_range = ScannerRange(25);
-
-    world.spawn((
-        Position { x: 1, y: 1 },
-        ShipName(String::from("Merchant Cruiser")),
-        Holds {
-            ..merchant_cruiser_holds
-        },
-        Shields {
-            ..merchant_cruiser_shields
-        },
-        Hull {
-            ..merchant_cruiser_hull
-        },
-        ScannerRange {
-            ..merchant_cruiser_scanner_range
-        },
-    ));
-
-    world.spawn((
-        Position { x: 2, y: 2 },
-        ShipName(String::from("Merchant Cruiser")),
-        Holds {
-            ..merchant_cruiser_holds
-        },
-        Shields {
-            ..merchant_cruiser_shields
-        },
-        Hull {
-            ..merchant_cruiser_hull
-        },
-        ScannerRange {
-            ..merchant_cruiser_scanner_range
-        },
-    ));
+    println!("Generating galaxy..");
+    for i in 0..5 {
+        create_ship(&MerchantCruiser {}, world, None);
+    }
 
     #[derive(StageLabel)]
     pub struct UpdateLabel;
 
+    // TODO add more systems here
     schedule.add_stage(
         UpdateLabel,
-        SystemStage::parallel().with_system(do_ai_scans),
+        SystemStage::parallel()
+            .with_system(do_ai_scans)
+            .with_system(print_positions),
     );
 
+    println!("Galaxy Generation complete.");
     Ok(())
 }
 
