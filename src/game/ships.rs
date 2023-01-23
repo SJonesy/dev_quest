@@ -8,6 +8,9 @@ use rand::prelude::*;
 #[derive(Debug, Component)]
 struct CanFitInHangar(bool);
 
+#[derive(Debug, Component)]
+pub struct Speed(pub f64);
+
 //------------------------------------------------------------------------------
 // SHIPS
 //------------------------------------------------------------------------------
@@ -19,6 +22,7 @@ pub struct ShipStats {
     hangar_space: u32,
     scanner_range: u32,
     can_fit_in_hangar: bool,
+    speed: f64,
 }
 pub trait ShipData {
     fn get_ship_data(&self) -> ShipStats;
@@ -35,6 +39,7 @@ impl ShipData for MerchantCruiser {
             hangar_space: 0,
             scanner_range: 500,
             can_fit_in_hangar: false,
+            speed: 10.0f64
         }
     }
 }
@@ -73,6 +78,8 @@ pub fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<
         });
     }
 
+    let current_action = CurrentAction(Action::Idle);
+
     world.spawn((
         Position { ..point.unwrap() },
         Name(ship_stats.name),
@@ -80,5 +87,6 @@ pub fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<
         Shields { ..shields },
         Hull { ..hull },
         ScannerRange { ..scanner_range },
+        CurrentAction { ..current_action },
     ));
 }
