@@ -9,7 +9,7 @@ pub enum Action {
 #[derive(Component)]
 pub struct CurrentAction(pub Action);
 
-#[derive(Component, PartialEq)]
+#[derive(Component, PartialEq, Copy, Clone)]
 pub struct Position {
     // for now, i64 makes some of the math easier although the plan is for
     // the bottom left corner of space to be 0,0 and the top right corner

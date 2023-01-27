@@ -54,9 +54,9 @@ pub fn ports_produce_food(
 ) {
     if (turn.0 % 2 == 0) {
         let turn_num = turn.0;
-        println!("Skipping on {turn_num}");
         return;
     }
+
     for (port, position, hasFoodModule, mut holds) in &mut ports {
         if (holds.empty > 0) {
             holds.empty -= 1;
@@ -75,19 +75,48 @@ pub fn save(mut turn: Res<Turn>) {
     }
 }
 
-pub fn move_ships(query: Query<(Entity, &Speed, &CurrentAction, &mut Position)>) {
-    for (entity, speed, action, position) in &query {
-        match &action.0 {
+pub fn move_ships(mut query: Query<(Entity, &Speed, &mut CurrentAction, &mut Position)>) {
+    for (entity, speed, mut action, mut position) in &mut query {
+        match action.0 {
             Action::MoveTo(target) => {
-                let distance_traveled: f64 = 0.0f64;
-                let diagonal_penalty: bool = true;
-                while (distance_traveled < speed.0 - 0.5f64) {
-                    if ((position.x != target.x) && (position.y != target.y)) {
-
-                        // TODO finish this
-                    }
+                if (target.x == position.x && target.y == position.y) {
+                     println!("Entity {:?} arrived at position: x {}, y {}",
+                        entity, position.x, position.y);
+                    action.0 = Action::Idle;
+                    break;
                 }
-                
+                let mut distance_traveled: u32 = 0;
+                let mut last_moved_y: bool = true;
+                while ((target.x != position.x || target.y != position.y) && distance_traveled < speed.0)  {
+                    if (last_moved_y && (target.x != position.x)) {
+                        if (target.x > position.x) {
+                            position.x += 1;
+                        }
+                        else {
+                            position.x -= 1;
+                        }
+                        last_moved_y = false;
+                    }
+                    else if (!last_moved_y && (target.y != position.y)) {
+                        if (target.y > position.y) {
+                            position.y += 1;
+                        }
+                        else {
+                            position.y -= 1;
+                        }
+                        last_moved_y = true;
+                    }
+                    else {
+                        // TODO this is the most concise way I can think of to do this
+                        // logic, but this thrashes when we're just moving on X or Y
+                        // by itself. Maybe rewrite all of this? Writing it the most
+                        // naive way with lots of if statements might be faster.
+                        last_moved_y = !last_moved_y;
+                    }
+                    distance_traveled += 1;
+                }
+                println!("Entity {:?} moved to position: x {}, y {}",
+                    entity, position.x, position.y);
             }
             _ => {} 
         }

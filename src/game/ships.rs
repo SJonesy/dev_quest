@@ -1,5 +1,6 @@
 use crate::game::shared_components::*;
 use bevy_ecs::prelude::*;
+use bevy_ecs::world::EntityMut;
 use rand::prelude::*;
 
 //------------------------------------------------------------------------------
@@ -9,7 +10,7 @@ use rand::prelude::*;
 struct CanFitInHangar(bool);
 
 #[derive(Debug, Component)]
-pub struct Speed(pub f64);
+pub struct Speed(pub u32);
 
 //------------------------------------------------------------------------------
 // SHIPS
@@ -22,7 +23,7 @@ pub struct ShipStats {
     hangar_space: u32,
     scanner_range: u32,
     can_fit_in_hangar: bool,
-    speed: f64,
+    speed: u32,
 }
 pub trait ShipData {
     fn get_ship_data(&self) -> ShipStats;
@@ -39,7 +40,7 @@ impl ShipData for MerchantCruiser {
             hangar_space: 0,
             scanner_range: 500,
             can_fit_in_hangar: false,
-            speed: 10.0f64
+            speed: 10
         }
     }
 }
@@ -47,7 +48,7 @@ impl ShipData for MerchantCruiser {
 //------------------------------------------------------------------------------
 // FUNCTIONS
 //------------------------------------------------------------------------------
-pub fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<Position>) {
+pub fn create_ship<'a, T: ShipData>(ship_type: &'a T, world: &'a mut World, point: Option<Position>) -> EntityMut<'a> {
     let ship_stats = ship_type.get_ship_data();
 
     let shields = Shields {
@@ -80,6 +81,8 @@ pub fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<
 
     let current_action = CurrentAction(Action::Idle);
 
+    let speed = Speed(ship_stats.speed);
+
     world.spawn((
         Position { ..point.unwrap() },
         Name(ship_stats.name),
@@ -88,5 +91,6 @@ pub fn create_ship<T: ShipData>(ship_type: &T, world: &mut World, point: Option<
         Hull { ..hull },
         ScannerRange { ..scanner_range },
         CurrentAction { ..current_action },
-    ));
+        Speed { ..speed },
+    ))
 }

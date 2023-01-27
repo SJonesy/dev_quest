@@ -29,7 +29,9 @@ pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
 
     // TODO temporary entities for starting to test docking/purchasing
     create_port(&FoodFactory {}, world, Some(Position { x: 420, y: 69 }));
-    create_ship(&MerchantCruiser {}, world, Some(Position { x: 400, y: 60 }));
+    let mut ship = create_ship(&MerchantCruiser {}, world, Some(Position { x: 400, y: 60 }));
+    let port_position = Position { x: 420, y: 69 };
+    ship.insert(CurrentAction(Action::MoveTo(port_position)));
 
     world.insert_resource(Turn(0));
 
@@ -39,9 +41,10 @@ pub fn init(world: &mut World, schedule: &mut Schedule) -> std::io::Result<()> {
     schedule.add_stage(
         Main,
         SystemStage::parallel()
-            .with_system(do_ai_scans)
-            .with_system(print_holds)
-            .with_system(ports_produce_food), 
+            //.with_system(do_ai_scans)
+            //.with_system(print_holds)
+            .with_system(ports_produce_food) 
+            .with_system(move_ships)
     );
 
     #[derive(StageLabel)]
