@@ -79,13 +79,7 @@ pub fn move_ships(mut query: Query<(Entity, &Speed, &mut CurrentAction, &mut Pos
     for (entity, speed, mut action, mut position) in &mut query {
         match action.0 {
             Action::MoveTo(target) => {
-                if (target.x == position.x && target.y == position.y) {
-                     println!("Entity {:?} arrived at position: x {}, y {}",
-                        entity, position.x, position.y);
-                    action.0 = Action::Idle;
-                    break;
-                }
-                let mut distance_traveled: u32 = 0;
+               let mut distance_traveled: u32 = 0;
                 let mut last_moved_y: bool = true;
                 while ((target.x != position.x || target.y != position.y) && distance_traveled < speed.0)  {
                     if (last_moved_y && (target.x != position.x)) {
@@ -115,9 +109,17 @@ pub fn move_ships(mut query: Query<(Entity, &Speed, &mut CurrentAction, &mut Pos
                     }
                     distance_traveled += 1;
                 }
-                println!("Entity {:?} moved to position: x {}, y {}",
-                    entity, position.x, position.y);
-            }
+                if (target.x == position.x && target.y == position.y) {
+                    println!("Entity {:?} arrived at position: x {}, y {}",
+                        entity, position.x, position.y);
+                    action.0 = Action::Idle;
+                    break;
+                }
+                else {
+                    println!("Entity {:?} moved to position: x {}, y {}",
+                        entity, position.x, position.y);
+                }
+             }
             _ => {} 
         }
     }

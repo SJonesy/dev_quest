@@ -9,6 +9,7 @@ pub enum Action {
 #[derive(Component)]
 pub struct CurrentAction(pub Action);
 
+// TODO sigh, Copy/Clone to satisfy the borrow checker in move_ships..
 #[derive(Component, PartialEq, Copy, Clone)]
 pub struct Position {
     // for now, i64 makes some of the math easier although the plan is for
