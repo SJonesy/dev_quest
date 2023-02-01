@@ -1,11 +1,13 @@
 #![allow(dead_code, non_snake_case)]
 
+mod planets;
 mod ports;
 mod shared_components;
 mod ships;
 mod systems;
 mod resources;
 
+use crate::game::planets::*;
 use crate::game::ports::*;
 use crate::game::shared_components::*;
 use crate::game::ships::*;
