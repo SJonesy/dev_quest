@@ -41,7 +41,6 @@ pub struct PlanetStats {
 // FUNCTIONS
 //------------------------------------------------------------------------------
 pub fn create_planet(world: &mut World, planet_type: PlanetType, point: Option<Position>, size: Option<PlanetSize>) {
-
     let mut point = point;
     if let None = point {
         let mut rng = rand::thread_rng();
@@ -51,21 +50,21 @@ pub fn create_planet(world: &mut World, planet_type: PlanetType, point: Option<P
         });
     }
 
+    let mut size = size;
+    if let None = size {
+        let mut rng = rand::thread_rng();
+        size = match rng.gen_range(0..4) {
+            0 => Some(PlanetSize::Tiny),
+            1 => Some(PlanetSize::Small),
+            2 => Some(PlanetSize::Medium),
+            3 => Some(PlanetSize::Large),
+            4 => Some(PlanetSize::Huge)
+        };
+    }
 
     world.spawn((
         Position { ..point.unwrap() },
-        Name(port_stats.name),
-        Holds { ..holds },
-        Shields { ..shields },
-        Hull { ..hull },
-        ScannerRange {
-            ..ScannerRange(port_stats.scanner_range)
-        },
-        DockingPorts {
-            ..DockingPorts(port_stats.docking_ports)
-        },
-        HasFoodModule {
-            ..HasFoodModule(foodModule)
-        },
+        Size { ..size.unwrap() },
+        
     ));
 }
